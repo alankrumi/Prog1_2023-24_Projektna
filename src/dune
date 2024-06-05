@@ -1,0 +1,4 @@
+(executable
+ (public_name hello_world)
+ (name tekstovni_vmesnik)
+ (libraries mylib))
