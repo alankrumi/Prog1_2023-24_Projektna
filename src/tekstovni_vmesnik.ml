@@ -2,7 +2,7 @@ open Mylib
 open Izdelek
 open Avtomat
 
-let izdelki =
+let seznam_izdelkov =
   [
     Izdelek.ustvari "Espresso" 0.40;
     Izdelek.ustvari "Espresso Podaljšan" 0.40;
@@ -20,38 +20,40 @@ let izdelki =
   ]
 
 let () =
-Random.self_init ();
-  let avto = Avtomat.ustvari izdelki in
-    try
-    Avtomat.izpisi_izdelke avto;
-
-    let rec izberi () =
-      Printf.printf "Prosimo, izberite izdelek: ";
-      let ime_izdelka = read_line () in
-      match
-        List.find_opt (fun izdelek -> izdelek.ime = ime_izdelka) izdelki
-      with
-      | Some _ -> Avtomat.izberi_izdelek avto ime_izdelka
-      | None ->
-          Printf.printf
-            "Izdelek %s ni na voljo. Prosimo, izberite veljaven izdelek.\n"
-            ime_izdelka;
+  Random.self_init (); (*Poskrbi, da je vsakič naključno generirano.*)
+  let rec zanka () = 
+    let avto = Avtomat.ustvari seznam_izdelkov in
+    if avto.ali_je_pokvarjen then
+      Printf.printf "Avtomat je pokvarjen. Pojdi na kavo v Mafijo ali ponovno zaženi avtomat!.\n"
+    else (
+      Avtomat.izpisi_izdelke avto;
+      let rec izberi () =
+        Printf.printf "Prosimo, izberite izdelek: ";
+        let ime_izdelka = read_line () in
+        match 
+          List.find_opt (fun izdelek -> izdelek.ime = ime_izdelka) seznam_izdelkov with
+          | Some _ -> Avtomat.izberi_izdelek avto ime_izdelka
+          | None -> 
+          Printf.printf "Izdelek %s ni na voljo. Prosimo, izberite veljaven izdelek.\n" ime_izdelka;
           izberi ()
-    in
-    izberi ();
+      in izberi ();
 
-    let rec zanka () =
-      Printf.printf "Vstavite denar: ";
-      try
-        let znesek = read_float () in
-        Avtomat.vstavi_denar avto znesek;
-        match avto.izbran_izdelek with
-        | Some _ ->
+      let rec vstavi_denar () =
+        Printf.printf "Vstavite denar: ";
+        try
+          let znesek = read_float () in
+          Avtomat.vstavi_denar avto znesek;
+          match avto.izbran_izdelek with
+          | Some _ -> vstavi_denar ()
+          | None -> 
+            Printf.printf "\n"; 
             zanka () 
-        | None -> () 
-      with Failure _ ->
-        Printf.printf "Neveljaven vnos. Prosimo, vnesite veljavno številko.\n";
-        zanka ()
-    in
-    zanka ()
-  with End_of_file -> Printf.printf "\nVnos se je nepričakovano končal.\n"
+          with
+          | Failure _ ->
+            Printf.printf "Neveljaven vnos. Prosimo, vnesite veljavno številko.\n";
+            vstavi_denar ()
+          in
+          vstavi_denar ()
+    )
+    in zanka ()
+  
